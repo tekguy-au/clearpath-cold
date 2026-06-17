@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ClearPath Cold · Tracking</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ice: #E8F4F8;
+    --cold: #1B6CA8;
+    --frost: #A8D5EA;
+    --dark: #0D1B2A;
+    --mid: #2C3E50;
+    --green: #27AE60;
+    --text: #F0F4F8;
+    --muted: #8FA8BF;
+  }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #map {
+    flex: 1;
+    width: 100%;
+  }
+
+  .status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(to bottom, rgba(13,27,42,0.95) 0%, rgba(13,27,42,0.7) 80%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .status-bar > * { pointer-events: auto; }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    background: var(--cold);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--frost);
+  }
+
+  .status-pill {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(168,213,234,0.2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--frost);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.4s ease;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+
+  .status-dot.live {
+    background: var(--green);
+    animation: dotPulse 2s infinite;
+  }
+
+  .status-dot.delivered {
+    background: var(--cold);
+    animation: none;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .info-card {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: linear-gradient(to top, rgba(13,27,42,0.97) 0%, rgba(13,27,42,0.85) 70%, transparent 100%);
+    padding: 40px 20px 24px;
+    pointer-events: none;
+  }
+
+  .info-card > * { pointer-events: auto; }
+
+  .info-inner {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .info-status {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .info-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .info-stats {
+    display: flex;
+    gap: 24px;
+  }
+
+  .info-stat-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--frost);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .info-stat-lbl {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  .delivered-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background: rgba(13,27,42,0.85);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .delivered-overlay.visible {
+    display: flex;
+  }
+
+  .delivered-icon {
+    font-size: 64px;
+    animation: deliveredPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes deliveredPop {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+  }
+
+  .delivered-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--frost);
+  }
+
+  .delivered-sub {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .waiting-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    background: rgba(13,27,42,0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .waiting-overlay.hidden { display: none; }
+
+  .waiting-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(168,213,234,0.2);
+    border-top-color: var(--cold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .waiting-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--frost);
+  }
+
+  .waiting-sub {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .error-banner {
+    position: absolute;
+    top: 60px;
+    left: 16px;
+    right: 16px;
+    z-index: 25;
+    background: rgba(231,76,60,0.9);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    display: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .error-banner.visible { display: block; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="status-bar">
+  <div class="logo-mark">❄️</div>
+  <div class="logo-text">ClearPath Cold</div>
+  <div class="status-pill">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">Connecting</span>
+  </div>
+</div>
+
+<div class="info-card" id="infoCard" style="display:none;">
+  <div class="info-inner">
+    <div class="info-status" id="infoStatus">On the way</div>
+    <div class="info-sub" id="infoSub">Your delivery is en route</div>
+    <div class="info-stats">
+      <div>
+        <div class="info-stat-val" id="statSpeed">—</div>
+        <div class="info-stat-lbl">km/h</div>
+      </div>
+      <div>
+        <div class="info-stat-val" id="statUpdated">—</div>
+        <div class="info-stat-lbl">Last update</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="waiting-overlay" id="waitingOverlay">
+  <div class="waiting-spinner"></div>
+  <div class="waiting-text">Waiting for driver</div>
+  <div class="waiting-sub">They'll appear on the map shortly</div>
+</div>
+
+<div class="delivered-overlay" id="deliveredOverlay">
+  <div class="delivered-icon">✅</div>
+  <div class="delivered-text">Delivered</div>
+  <div class="delivered-sub">Your delivery is complete</div>
+</div>
+
+<div class="error-banner" id="errorBanner">Connection lost — reconnecting…</div>
+
+<script>
+const WS_URL = window.location.hostname === 'localhost'
+  ? 'ws://localhost:3001'
+  : 'wss://clearpath-cold-server.onrender.com';
+
+const params = new URLSearchParams(window.location.search);
+const sessionId = params.get('id');
+
+if (!sessionId) {
+  document.getElementById('waitingOverlay').innerHTML =
+    '<div class="waiting-text">No tracking ID</div><div class="waiting-sub">This link may be invalid</div>';
+}
+
+let map, marker, animFrame;
+let currentPos = null;
+let targetPos = null;
+let currentHeading = 0;
+let targetHeading = 0;
+let animStartTime = null;
+const ANIM_DURATION = 2000;
+let isDelivered = false;
+let ws = null;
+let reconnectTimer = null;
+let lastUpdateTime = null;
+
+function initMap() {
+  const darkStyle = [
+    { elementType: 'geometry', stylers: [{ color: '#0D1B2A' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#0D1B2A' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#4A6478' }] },
+    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#1B3A4B' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#172A3A' }] },
+    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1B3A4B' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#1B6CA8' }] },
+    { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#0F4C75' }] },
+    { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#A8D5EA' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0A1628' }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#1B6CA8' }] },
+    { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#112233' }] },
+    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#4A6478' }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0F1F2E' }] },
+    { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#112233' }] },
+    { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#0E1E2E' }] },
+  ];
+
+  map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 15,
+    center: { lat: -37.8136, lng: 144.9631 },
+    styles: darkStyle,
+    disableDefaultUI: true,
+    zoomControl: false,
+    gestureHandling: 'greedy',
+  });
+
+  if (sessionId) connectWS();
+}
+
+const MARKER_SVG = {
+  path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
+  fillColor: '#1B6CA8',
+  fillOpacity: 1,
+  strokeColor: '#A8D5EA',
+  strokeWeight: 2,
+  scale: 1.8,
+  anchor: { x: 12, y: 22 },
+};
+
+function createMarker(lat, lng) {
+  marker = new google.maps.Marker({
+    position: { lat, lng },
+    map: map,
+    icon: MARKER_SVG,
+    optimized: false,
+  });
+}
+
+function animateMarker() {
+  if (!currentPos || !targetPos || isDelivered) return;
+
+  const now = Date.now();
+  if (!animStartTime) animStartTime = now;
+  const elapsed = now - animStartTime;
+  const t = Math.min(elapsed / ANIM_DURATION, 1);
+  const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+  const lat = currentPos.lat + (targetPos.lat - currentPos.lat) * ease;
+  const lng = currentPos.lng + (targetPos.lng - currentPos.lng) * ease;
+
+  if (marker) {
+    marker.setPosition({ lat, lng });
+  }
+
+  if (t < 1) {
+    animFrame = requestAnimationFrame(animateMarker);
+  } else {
+    currentPos = { lat: targetPos.lat, lng: targetPos.lng };
+    animStartTime = null;
+  }
+}
+
+function updatePosition(lat, lng, heading, speed) {
+  if (!marker) {
+    createMarker(lat, lng);
+    currentPos = { lat, lng };
+    map.panTo({ lat, lng });
+    map.setZoom(16);
+
+    document.getElementById('waitingOverlay').classList.add('hidden');
+    document.getElementById('infoCard').style.display = '';
+    setStatus('live', 'On the way');
+    return;
+  }
+
+  currentPos = marker.getPosition().toJSON();
+  targetPos = { lat, lng };
+  animStartTime = null;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  animFrame = requestAnimationFrame(animateMarker);
+
+  map.panTo({ lat, lng });
+
+  if (heading !== null && heading !== undefined) {
+    targetHeading = heading;
+  }
+
+  document.getElementById('statSpeed').textContent = speed ? `${speed}` : '0';
+  lastUpdateTime = Date.now();
+  document.getElementById('statUpdated').textContent = 'Just now';
+
+  if (speed !== null && speed > 60) {
+    setStatus('live', 'On the way');
+    document.getElementById('infoStatus').textContent = 'On the way';
+    document.getElementById('infoSub').textContent = 'Your delivery is en route';
+  } else if (speed !== null && speed < 5 && currentPos) {
+    setStatus('live', 'Arriving soon');
+    document.getElementById('infoStatus').textContent = 'Arriving soon';
+    document.getElementById('infoSub').textContent = 'Driver is nearby';
+  } else {
+    setStatus('live', 'On the way');
+    document.getElementById('infoStatus').textContent = 'On the way';
+    document.getElementById('infoSub').textContent = 'Your delivery is en route';
+  }
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  const label = document.getElementById('statusText');
+  dot.className = 'status-dot';
+  if (state === 'live') dot.classList.add('live');
+  if (state === 'delivered') dot.classList.add('delivered');
+  label.textContent = text;
+}
+
+function showDelivered() {
+  isDelivered = true;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  setStatus('delivered', 'Delivered');
+  document.getElementById('infoCard').style.display = 'none';
+  document.getElementById('deliveredOverlay').classList.add('visible');
+}
+
+function connectWS() {
+  ws = new WebSocket(`${WS_URL}?id=${sessionId}&role=watcher`);
+
+  ws.onopen = () => {
+    document.getElementById('errorBanner').classList.remove('visible');
+    if (!marker) {
+      setStatus('', 'Waiting');
+    }
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === 'location') {
+      updatePosition(msg.lat, msg.lng, msg.heading, msg.speed);
+    }
+
+    if (msg.type === 'delivered') {
+      showDelivered();
+    }
+
+    if (msg.type === 'waiting') {
+      setStatus('', 'Preparing');
+      document.getElementById('statusText').textContent = 'Preparing';
+    }
+
+    if (msg.error) {
+      document.getElementById('waitingOverlay').innerHTML =
+        '<div class="waiting-text">Session not found</div><div class="waiting-sub">This tracking link may have expired</div>';
+    }
+  };
+
+  ws.onclose = () => {
+    if (!isDelivered) {
+      document.getElementById('errorBanner').classList.add('visible');
+      reconnectTimer = setTimeout(connectWS, 3000);
+    }
+  };
+
+  ws.onerror = () => {};
+}
+
+setInterval(() => {
+  if (!lastUpdateTime) return;
+  const ago = Math.round((Date.now() - lastUpdateTime) / 1000);
+  if (ago < 5) document.getElementById('statUpdated').textContent = 'Just now';
+  else if (ago < 60) document.getElementById('statUpdated').textContent = `${ago}s ago`;
+  else document.getElementById('statUpdated').textContent = `${Math.floor(ago / 60)}m ago`;
+}, 1000);
+</script>
+
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1MaPUOfYKWagYghJ0ye0HcpwkJusn-RU&callback=initMap"></script>
+</body>
+</html>

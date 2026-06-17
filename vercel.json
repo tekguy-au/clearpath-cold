@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/driver", "destination": "/driver.html" },
+    { "source": "/track", "destination": "/track.html" }
+  ]
+}

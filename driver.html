@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ClearPath Cold · Driver</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ice: #E8F4F8;
+    --cold: #1B6CA8;
+    --frost: #A8D5EA;
+    --dark: #0D1B2A;
+    --mid: #2C3E50;
+    --accent: #FF6B2B;
+    --green: #27AE60;
+    --red: #E74C3C;
+    --text: #F0F4F8;
+    --muted: #8FA8BF;
+  }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(168,213,234,0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--cold);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--frost);
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    gap: 32px;
+  }
+
+  .status-ring {
+    position: relative;
+    width: 160px;
+    height: 160px;
+  }
+
+  .status-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .ring-bg { fill: none; stroke: rgba(168,213,234,0.1); stroke-width: 6; }
+  .ring-fill {
+    fill: none;
+    stroke: var(--cold);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 408;
+    stroke-dashoffset: 408;
+    transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
+  }
+
+  .ring-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .ring-icon { font-size: 32px; }
+
+  .ring-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(168,213,234,0.1);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .stat-val {
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--frost);
+  }
+
+  .stat-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .share-box {
+    width: 100%;
+    max-width: 320px;
+    background: rgba(27,108,168,0.15);
+    border: 1px solid rgba(27,108,168,0.4);
+    border-radius: 14px;
+    padding: 16px;
+    display: none;
+  }
+
+  .share-box.visible { display: block; }
+
+  .share-label {
+    font-size: 11px;
+    color: var(--frost);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .share-url {
+    font-size: 13px;
+    color: var(--text);
+    word-break: break-all;
+    line-height: 1.4;
+    font-family: 'SF Mono', monospace;
+    margin-bottom: 12px;
+  }
+
+  .copy-btn {
+    background: var(--cold);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    letter-spacing: 0.03em;
+  }
+
+  .copy-btn:active { opacity: 0.8; }
+
+  .actions {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-primary {
+    background: var(--cold);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1.5px solid var(--red);
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+    transition: background 0.2s;
+  }
+
+  .btn-danger.visible { display: block; }
+  .btn-danger:active { background: rgba(231,76,60,0.1); }
+
+  .pulse {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .conn-dot.live { background: var(--green); }
+
+  footer {
+    padding: 16px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">❄️</div>
+  <div>
+    <div class="logo-text">ClearPath Cold</div>
+    <div class="logo-sub">Driver</div>
+  </div>
+</header>
+
+<main>
+  <div class="status-ring">
+    <svg viewBox="0 0 140 140">
+      <circle class="ring-bg" cx="70" cy="70" r="65"/>
+      <circle class="ring-fill" id="ringFill" cx="70" cy="70" r="65"/>
+    </svg>
+    <div class="ring-inner">
+      <div class="ring-icon" id="ringIcon">🚐</div>
+      <div class="ring-label" id="ringLabel">Ready</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-val" id="statUpdates">—</div>
+      <div class="stat-lbl">Updates sent</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statSpeed">—</div>
+      <div class="stat-lbl">km/h</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statAccuracy">—</div>
+      <div class="stat-lbl">GPS accuracy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statConn">
+        <span class="conn-dot" id="connDot"></span>—
+      </div>
+      <div class="stat-lbl">Connection</div>
+    </div>
+  </div>
+
+  <div class="share-box" id="shareBox">
+    <div class="share-label">Share tracking link</div>
+    <div class="share-url" id="shareUrl"></div>
+    <button class="copy-btn" onclick="copyLink()">Copy link</button>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary" id="startBtn" onclick="startDelivery()">Start delivery</button>
+    <button class="btn-danger" id="deliveredBtn" onclick="markDelivered()">Mark as delivered</button>
+  </div>
+</main>
+
+<footer id="footerMsg">Location sharing off</footer>
+
+<script>
+// CONFIG — update WS_URL after deploying server
+const WS_URL = window.location.hostname === 'localhost'
+  ? 'ws://localhost:3001'
+  : 'wss://clearpath-cold-server.onrender.com'; // update this
+
+const SERVER_URL = WS_URL.replace('wss://', 'https://').replace('ws://', 'http://');
+const TRACK_BASE = window.location.origin + '/track.html';
+
+let ws = null;
+let sessionId = null;
+let watchId = null;
+let updateCount = 0;
+let isLive = false;
+
+async function startDelivery() {
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('ringLabel').textContent = 'Starting…';
+
+  try {
+    // Create session
+    const res = await fetch(`${SERVER_URL}/session`, { method: 'POST' });
+    const { id } = await res.json();
+    sessionId = id;
+
+    // Show tracking link
+    const trackUrl = `${TRACK_BASE}?id=${id}`;
+    document.getElementById('shareUrl').textContent = trackUrl;
+    document.getElementById('shareBox').classList.add('visible');
+
+    // Connect WebSocket as driver
+    connectWS(id);
+
+  } catch (e) {
+    alert('Could not start session. Check server connection.');
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('ringLabel').textContent = 'Ready';
+  }
+}
+
+function connectWS(id) {
+  ws = new WebSocket(`${WS_URL}?id=${id}&role=driver`);
+
+  ws.onopen = () => {
+    setConnected(true);
+    startGPS();
+  };
+
+  ws.onclose = () => {
+    setConnected(false);
+    if (isLive) {
+      // Auto-reconnect
+      setTimeout(() => connectWS(id), 3000);
+    }
+  };
+
+  ws.onerror = () => setConnected(false);
+}
+
+function startGPS() {
+  if (!navigator.geolocation) {
+    alert('Geolocation not supported on this device.');
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      if (!isLive) {
+        isLive = true;
+        setLiveState();
+      }
+
+      const { latitude: lat, longitude: lng, speed, accuracy, heading } = pos.coords;
+
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'location',
+          lat, lng,
+          heading: heading || null,
+          speed: speed ? Math.round(speed * 3.6) : null // m/s → km/h
+        }));
+        updateCount++;
+        document.getElementById('statUpdates').textContent = updateCount;
+        document.getElementById('statSpeed').textContent = speed ? Math.round(speed * 3.6) : '0';
+        document.getElementById('statAccuracy').textContent = accuracy ? `${Math.round(accuracy)}m` : '—';
+        animateRing();
+      }
+    },
+    (err) => {
+      document.getElementById('footerMsg').textContent = `GPS error: ${err.message}`;
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+}
+
+function setLiveState() {
+  document.getElementById('ringIcon').textContent = '🚐';
+  document.getElementById('ringLabel').textContent = 'Live';
+  document.getElementById('startBtn').textContent = 'Delivering…';
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('deliveredBtn').classList.add('visible');
+  document.getElementById('footerMsg').textContent = 'Streaming live location';
+}
+
+function setConnected(ok) {
+  const dot = document.getElementById('connDot');
+  const val = document.getElementById('statConn');
+  if (ok) {
+    dot.classList.add('live');
+    val.innerHTML = '<span class="conn-dot live"></span>Live';
+  } else {
+    dot.classList.remove('live');
+    val.innerHTML = '<span class="conn-dot"></span>Off';
+  }
+}
+
+let ringTimeout;
+function animateRing() {
+  const ring = document.getElementById('ringFill');
+  ring.style.stroke = '#27AE60';
+  ring.style.strokeDashoffset = '0';
+  clearTimeout(ringTimeout);
+  ringTimeout = setTimeout(() => {
+    ring.style.stroke = '#1B6CA8';
+    ring.style.strokeDashoffset = '204'; // half
+  }, 800);
+}
+
+function markDelivered() {
+  if (!confirm('Mark this delivery as complete?')) return;
+
+  if (ws?.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'delivered' }));
+  }
+
+  // Stop GPS
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  isLive = false;
+  ws?.close();
+
+  document.getElementById('ringIcon').textContent = '✅';
+  document.getElementById('ringLabel').textContent = 'Delivered';
+  document.getElementById('deliveredBtn').classList.remove('visible');
+  document.getElementById('startBtn').textContent = 'Start new delivery';
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('shareBox').classList.remove('visible');
+  document.getElementById('footerMsg').textContent = 'Delivery complete';
+  updateCount = 0;
+  sessionId = null;
+
+  // Reset start button for new delivery
+  document.getElementById('startBtn').onclick = startDelivery;
+}
+
+function copyLink() {
+  const url = document.getElementById('shareUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy link', 2000);
+  });
+}
+</script>
+</body>
+</html>
