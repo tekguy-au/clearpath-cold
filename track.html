@@ -152,8 +152,8 @@ async function poll() {
         position: pos,
         map: map,
         icon: {
-          path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
-          fillColor: '#1B6CA8', fillOpacity: 1, strokeColor: '#A8D5EA', strokeWeight: 2, scale: 1.8, anchor: new google.maps.Point(12, 22),
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#1B6CA8', fillOpacity: 1, strokeColor: '#A8D5EA', strokeWeight: 3, scale: 10,
         },
       });
       map.panTo(pos);
