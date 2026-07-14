@@ -234,6 +234,22 @@
   .btn-danger.visible { display: block; }
   .btn-danger:active { background: rgba(231,76,60,0.1); }
 
+  .btn-stop {
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid rgba(168,213,234,0.3);
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+    transition: background 0.2s;
+  }
+
+  .btn-stop.visible { display: block; }
+  .btn-stop:active { background: rgba(168,213,234,0.08); }
+
   .pulse {
     animation: pulse 2s infinite;
   }
@@ -313,6 +329,7 @@
   <div class="actions">
     <button class="btn-primary" id="startBtn" onclick="startDelivery()">Start delivery</button>
     <button class="btn-danger" id="deliveredBtn" onclick="markDelivered()">Mark as delivered</button>
+    <button class="btn-stop" id="stopBtn" onclick="stopDelivery()">Stop</button>
   </div>
 </main>
 
@@ -408,6 +425,7 @@ function setLiveState() {
   document.getElementById('startBtn').textContent = 'Delivering…';
   document.getElementById('startBtn').disabled = true;
   document.getElementById('deliveredBtn').classList.add('visible');
+  document.getElementById('stopBtn').classList.add('visible');
   document.getElementById('footerMsg').textContent = 'Streaming live location';
 }
 
@@ -451,6 +469,7 @@ async function markDelivered() {
   document.getElementById('ringIcon').textContent = '✅';
   document.getElementById('ringLabel').textContent = 'Delivered';
   document.getElementById('deliveredBtn').classList.remove('visible');
+  document.getElementById('stopBtn').classList.remove('visible');
   document.getElementById('startBtn').textContent = 'Start new delivery';
   document.getElementById('startBtn').disabled = false;
   document.getElementById('shareBox').classList.remove('visible');
@@ -458,6 +477,28 @@ async function markDelivered() {
   updateCount = 0;
   sessionId = null;
   document.getElementById('startBtn').onclick = startDelivery;
+}
+
+function stopDelivery() {
+  if (!confirm('Stop sharing your location? The customer will stop receiving updates.')) return;
+
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  if (sendInterval) clearInterval(sendInterval);
+  isLive = false;
+
+  document.getElementById('ringIcon').textContent = '🚐';
+  document.getElementById('ringLabel').textContent = 'Ready';
+  document.getElementById('ringFill').style.strokeDashoffset = '408';
+  document.getElementById('deliveredBtn').classList.remove('visible');
+  document.getElementById('stopBtn').classList.remove('visible');
+  document.getElementById('startBtn').textContent = 'Start delivery';
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('shareBox').classList.remove('visible');
+  document.getElementById('footerMsg').textContent = 'Location sharing off';
+  setConnected(false);
+  updateCount = 0;
+  document.getElementById('statUpdates').textContent = '—';
+  sessionId = null;
 }
 
 function copyLink() {
