@@ -141,7 +141,7 @@ function fakeRego(id) {
 function fleetInfoContent(id) {
   const s = fleetData[id] || {};
   const vehicle = VEHICLE_NAMES[hashId(id) % VEHICLE_NAMES.length];
-  const driver = DRIVER_NAMES[hashId(id + 'd') % DRIVER_NAMES.length];
+  const driver = s.name || DRIVER_NAMES[hashId(id + 'd') % DRIVER_NAMES.length];
   const speed = s.speed != null ? `${s.speed} km/h` : '—';
   return `<div style="font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;color:#0D1B2A;min-width:170px;">
     <div style="font-weight:700;margin-bottom:2px;">${vehicle}</div>
