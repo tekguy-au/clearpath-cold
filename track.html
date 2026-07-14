@@ -74,7 +74,7 @@
 <div id="map"></div>
 
 <div class="status-bar">
-  <div class="logo-mark">❄️</div>
+  <div class="logo-mark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="4.2" y1="6" x2="19.8" y2="18"/><line x1="19.8" y1="6" x2="4.2" y2="18"/><path d="M12 2l-2 2M12 2l2 2M12 22l-2-2M12 22l2-2"/><path d="M4.2 6l2.7-.3M4.2 6l.6 2.7M19.8 6l-2.7-.3M19.8 6l-.6 2.7"/><path d="M4.2 18l2.7.3M4.2 18l.6-2.7M19.8 18l-2.7.3M19.8 18l-.6-2.7"/></svg></div>
   <div class="logo-text">ClearPath Cold</div>
   <div class="status-pill">
     <span class="status-dot" id="statusDot"></span>
@@ -118,6 +118,38 @@ let map, marker, pollTimer;
 let currentPos = null;
 let lastUpdateTs = null;
 let fleetMarkers = {};
+let fleetData = {};
+let hoverInfo;
+
+const VEHICLE_NAMES = ['Reefer Van 04', 'Cold Chain Sprinter', 'Iveco Daily Reefer', 'Fuso Canter Freezer', 'Hyundai Porter Cold', 'Reefer Van 11'];
+const DRIVER_NAMES = ['J. Ashford', 'M. Delacroix', 'R. Okafor', 'T. Nguyen', 'S. Whitfield', 'K. Marchetti'];
+
+function hashId(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function fakeRego(id) {
+  const h = hashId(id);
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const l = [0, 1, 2].map(i => letters[(h >> (i * 5)) % letters.length]).join('');
+  const n = 100 + (h % 900);
+  return `${l}-${n}`;
+}
+
+function fleetInfoContent(id) {
+  const s = fleetData[id] || {};
+  const vehicle = VEHICLE_NAMES[hashId(id) % VEHICLE_NAMES.length];
+  const driver = DRIVER_NAMES[hashId(id + 'd') % DRIVER_NAMES.length];
+  const speed = s.speed != null ? `${s.speed} km/h` : '—';
+  return `<div style="font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;color:#0D1B2A;min-width:170px;">
+    <div style="font-weight:700;margin-bottom:2px;">${vehicle}</div>
+    <div style="color:#5B7C93;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Rego ${fakeRego(id)}</div>
+    <div>Driver: <b>${driver}</b></div>
+    <div>Speed: <b>${speed}</b></div>
+  </div>`;
+}
 
 const darkStyle = [
   { elementType: 'geometry', stylers: [{ color: '#0D1B2A' }] },
@@ -162,6 +194,7 @@ function initMap() {
     gestureHandling: 'greedy',
   });
   if (fleetMode) {
+    hoverInfo = new google.maps.InfoWindow();
     pollFleet();
     pollTimer = setInterval(pollFleet, 45000);
   } else {
@@ -190,9 +223,10 @@ async function pollFleet() {
       seen.add(s.id);
       const pos = { lat: s.lat, lng: s.lng };
       bounds.extend(pos);
+      fleetData[s.id] = s;
 
       if (!fleetMarkers[s.id]) {
-        fleetMarkers[s.id] = new google.maps.Marker({
+        const m = new google.maps.Marker({
           position: pos,
           map: map,
           icon: {
@@ -202,6 +236,12 @@ async function pollFleet() {
           },
           label: { text: s.id.slice(0, 4).toUpperCase(), color: '#FFFFFF', fontSize: '9px', fontWeight: '700' },
         });
+        m.addListener('mouseover', () => {
+          hoverInfo.setContent(fleetInfoContent(s.id));
+          hoverInfo.open(map, m);
+        });
+        m.addListener('mouseout', () => hoverInfo.close());
+        fleetMarkers[s.id] = m;
       } else {
         smoothMove(fleetMarkers[s.id], pos);
       }
@@ -211,6 +251,7 @@ async function pollFleet() {
       if (!seen.has(id)) {
         fleetMarkers[id].setMap(null);
         delete fleetMarkers[id];
+        delete fleetData[id];
       }
     });
 
