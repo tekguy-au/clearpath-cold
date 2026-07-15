@@ -266,13 +266,9 @@ function initMap() {
   });
   if (fleetMode) {
     hoverInfo = new google.maps.InfoWindow();
-    if (sessionStorage.getItem('coldFleetAuth') === '1') {
-      startFleet();
-    } else {
-      document.getElementById('waitingOverlay').classList.add('hidden');
-      document.getElementById('pinOverlay').classList.remove('hidden');
-      document.getElementById('pinInput').focus();
-    }
+    document.getElementById('waitingOverlay').classList.add('hidden');
+    document.getElementById('pinOverlay').classList.remove('hidden');
+    document.getElementById('pinInput').focus();
   } else {
     poll();
     pollTimer = setInterval(poll, 45000);
@@ -289,7 +285,6 @@ function startFleet() {
 function tryPin() {
   const val = document.getElementById('pinInput').value.trim();
   if (val === '1092') {
-    sessionStorage.setItem('coldFleetAuth', '1');
     document.getElementById('pinOverlay').classList.add('hidden');
     startFleet();
   } else {
