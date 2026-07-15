@@ -2,5 +2,8 @@
   "rewrites": [
     { "source": "/driver", "destination": "/driver.html" },
     { "source": "/track", "destination": "/track.html" }
+  ],
+  "redirects": [
+    { "source": "/", "destination": "/track", "permanent": false }
   ]
 }
