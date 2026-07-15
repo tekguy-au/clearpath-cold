@@ -451,7 +451,15 @@ function startGPS() {
       }
     },
     (err) => {
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      watchId = null;
       document.getElementById('footerMsg').textContent = `GPS error: ${err.message}`;
+      document.getElementById('ringLabel').textContent = 'Ready';
+      document.getElementById('startBtn').textContent = 'Start delivery';
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('shareBox').classList.remove('visible');
+      setConnected(false);
+      alert(`Could not get your location: ${err.message}. Check that location access is allowed for this site, then try again.`);
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
