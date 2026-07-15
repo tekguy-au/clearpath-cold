@@ -316,6 +316,7 @@ async function pollFleet() {
 
     const seen = new Set();
     const bounds = new google.maps.LatLngBounds();
+    let markersChanged = false;
 
     sessions.forEach(s => {
       seen.add(s.id);
@@ -335,6 +336,7 @@ async function pollFleet() {
         });
         m.addListener('mouseout', () => hoverInfo.close());
         fleetMarkers[s.id] = m;
+        markersChanged = true;
       } else {
         smoothMove(fleetMarkers[s.id], pos);
       }
@@ -346,10 +348,11 @@ async function pollFleet() {
         delete fleetMarkers[id];
         delete fleetData[id];
         delete fleetColorAssignments[id];
+        markersChanged = true;
       }
     });
 
-    if (sessions.length) map.fitBounds(bounds, 60);
+    if (sessions.length && markersChanged) map.fitBounds(bounds, 60);
   } catch (e) {}
 }
 
